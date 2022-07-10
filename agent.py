@@ -7,7 +7,8 @@ from tensorflow.keras import layers
 from tensorflow.keras.layers import IntegerLookup
 from tensorflow.keras.layers import Normalization
 from tensorflow.keras.layers import StringLookup
-import test
+
+import sample_generator as sg
 
 # dont print annoying warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
@@ -21,11 +22,14 @@ units_file_url = "../ltd2-game-parser/units.csv"
 unitDf = pd.read_csv(units_file_url, dtype={"units": str, "leak": int})
 unitDf.fillna('', inplace=True)
 
+sends_file_url = "../ltd2-game-parser/sends.csv"
+sendsDf = pd.read_csv(sends_file_url, dtype={"sends": str, "leak": int})
+sendsDf.fillna('', inplace=True)
+
 waves_file_url = "../ltd2-game-parser/waves.csv"
 waveDf = pd.read_csv(waves_file_url, dtype={"wave": int, "leak": int})
 # print(dataframe.shape[0])
-# print(dataframe.head())
-
+# print(sendsDf.head())
 
 val_dataframe = dataframe.sample(frac=0.2, random_state=1)
 train_dataframe = dataframe.drop(val_dataframe.index)
@@ -46,9 +50,11 @@ def dataframe_to_dataset(dataframe):
 
 train_ds = dataframe_to_dataset(train_dataframe)
 val_ds = dataframe_to_dataset(val_dataframe)
+
+# Categorical Datasets
 waves_ds = dataframe_to_dataset(waveDf)
 units_ds = dataframe_to_dataset(unitDf)
-
+sends_ds = dataframe_to_dataset(sendsDf)
 
 train_ds = train_ds.batch(4096)
 val_ds = val_ds.batch(4096)
@@ -86,14 +92,19 @@ all_inputs = [
 wave_encoded = encode_categorical_feature(wave, "wave", waves_ds, False)
 
 # String categorical features
-sends_encoded = encode_categorical_feature(sends, "sends", train_ds, True)
+sends_encoded = encode_categorical_feature(sends, "sends", sends_ds, True)
 
 
-features = [wave_encoded, sends_encoded]
+features = [
+    wave_encoded,
+    sends_encoded
+]
+
 for col in dataframe.columns:
     print("categorizing column " + col)
     if col in ["wave", "sends", "leak"]:
         continue
+
     inp = keras.Input(shape=(1,), name=col, dtype="string")
     all_inputs.append(inp)
     enc = encode_categorical_feature(inp, "units", units_ds, True)
@@ -118,21 +129,21 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
 
-# model.load_weights(checkpoint_path)
+#model.load_weights(checkpoint_path)
 
 
 model.fit(train_ds, epochs=20, validation_data=val_ds,
           callbacks=[cp_callback], verbose=2)
 
-# while True:
-#     print("enter a test")
-#     input()
-#     input_dict = {name: tf.convert_to_tensor(
-#         [value]) for name, value in test.generateSample().items()}
-#     predictions = model.predict(input_dict)
+while True:
+    print("enter a test")
+    input()
+    input_dict = {name: tf.convert_to_tensor(
+        [value]) for name, value in sg.generateSample().items()}
+    predictions = model.predict(input_dict)
 
-#     print(
-#         "%.1f%% chance to leak " % (100 * predictions[0][0],)
-#     )
+    print(
+        "%.1f%% chance to leak " % (100 * predictions[0][0],)
+    )
 
-#     print(predictions)
+    print(predictions)
