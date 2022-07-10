@@ -118,21 +118,21 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
 
-
 # model.load_weights(checkpoint_path)
 
 
-model.fit(train_ds, epochs=20, validation_data=val_ds, callbacks=[cp_callback])
+model.fit(train_ds, epochs=20, validation_data=val_ds,
+          callbacks=[cp_callback], verbose=2)
 
-while True:
-    print("enter a test")
-    input()
-    input_dict = {name: tf.convert_to_tensor(
-        [value]) for name, value in test.generateSample().items()}
-    predictions = model.predict(input_dict)
+# while True:
+#     print("enter a test")
+#     input()
+#     input_dict = {name: tf.convert_to_tensor(
+#         [value]) for name, value in test.generateSample().items()}
+#     predictions = model.predict(input_dict)
 
-    print(
-        "%.1f%% chance to leak " % (100 * predictions[0][0],)
-    )
+#     print(
+#         "%.1f%% chance to leak " % (100 * predictions[0][0],)
+#     )
 
-    print(predictions)
+#     print(predictions)
