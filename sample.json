@@ -1,0 +1,27 @@
+{
+    "Towers": [
+        {
+            "T": "butcher_unit_id",
+            "X": -4.0,
+            "Z": 3.0,
+            "S": 0.0
+        }
+    ],
+    "Rolls": [
+        "bone_warrior_unit_id",
+        "gargoyle_unit_id",
+        "gateguard_unit_id",
+        "butcher_unit_id",
+        "nightmare_unit_id",
+        "lord_of_death_unit_id"
+    ],
+    "LegionSpellPositionX": 0.0,
+    "LegionSpellPositionZ": 0.0,
+    "Gold": 9665,
+    "Mythium": 9960,
+    "Wave": 3,
+    "LegionSpell": "",
+    "ExtraRecommendedValue": 0,
+    "HorizontalPref": 1,
+    "VerticalPref": 0
+}
