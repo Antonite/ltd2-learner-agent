@@ -4,7 +4,8 @@ import pandas as pd
 
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
+from keras import layers
+from keras import regularizers
 
 import glob
 import sample_generator as sg
@@ -27,7 +28,8 @@ waveDf = pd.read_csv(waves_file_url, dtype={"wave": int, "leak": int})
 
 checkpoint_path = "trainings/june152022.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
-cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
+cp_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_path, save_weights_only=True, verbose=1)
 
 # Categorical Datasets
 waves_ds = Utils.dataframe_to_dataset(waveDf)
@@ -49,7 +51,8 @@ all_inputs = [
 wave_encoded = Utils.encode_categorical_feature(wave, "wave", waves_ds, False)
 
 # String categorical features
-sends_encoded = Utils.encode_categorical_feature(sends, "sends", sends_ds, True)
+sends_encoded = Utils.encode_categorical_feature(
+    sends, "sends", sends_ds, True)
 
 features = [
     wave_encoded,
@@ -64,15 +67,16 @@ for col in Utils.GAME_BOARD_COLUMNS:
 
 all_features = layers.concatenate(features)
 
-l1 = layers.Dense(308, activation="relu")(all_features)
-l1 = layers.Dropout(0.5)(l1)
+l1 = layers.Dense(308, activation="relu", kernel_regularizer=regularizers.L2(0.001))(all_features)
+l1 = layers.Dropout(0.2)(l1)
 
-l2 = layers.Dense(308, activation="relu")(l1)
-l2 = layers.Dropout(0.5)(l2)
+l2 = layers.Dense(308, activation="relu", kernel_regularizer=regularizers.L2(0.001))(l1)
+l2 = layers.Dropout(0.2)(l2)
 
 output = layers.Dense(1, activation="sigmoid")(l2)
 model = keras.Model(all_inputs, output)
-model.compile("adam", "binary_crossentropy", metrics=["accuracy"])
+opt = keras.optimizers.Adam(learning_rate=0.01)
+model.compile(loss="binary_crossentropy", metrics=["accuracy"], optimizer=opt)
 
 model.load_weights(checkpoint_path)
 
@@ -98,11 +102,12 @@ for e in range(100):
         train_ds = Utils.dataframe_to_dataset(train_dataframe)
         val_ds = Utils.dataframe_to_dataset(val_dataframe)
 
-        train_ds = train_ds.batch(4096)
-        val_ds = val_ds.batch(4096)
+        train_ds = train_ds.batch(32)
+        val_ds = val_ds.batch(32)
 
         # model.fit(train_ds, epochs=5, validation_data=val_ds, callbacks=[], verbose=1)  # NO CHECKPOINTING **
-        model.fit(train_ds, epochs=5, validation_data=val_ds, callbacks=[cp_callback], verbose=1)
+        model.fit(train_ds, epochs=1, validation_data=val_ds,
+                  callbacks=[cp_callback], verbose=1)
         i += 1
 
     i = 1  # Reset i to first value after first iteration
